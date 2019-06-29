@@ -1,3 +1,16 @@
+function createDocument(data) {
+    return fetch("https://markdown-api-test.herokuapp.com/v1/documents",
+    {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers:{
+            'Content-Type': 'application/json'
+        }
+    }).then(data => {
+        return data.json();
+    }).catch(console.log);
+}
+
 function getDocuments() {
 
     return fetch("https://markdown-api-test.herokuapp.com/v1/documents").then(data => {
@@ -31,6 +44,7 @@ function deleteDocument(_id) {
 }
 
 export {
+    createDocument,
     getDocuments,
     updateDocument,
     deleteDocument

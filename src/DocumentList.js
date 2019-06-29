@@ -7,7 +7,6 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import DescriptionIcon from '@material-ui/icons/DescriptionOutlined';
 import { Paper } from '@material-ui/core';
-import { getDocuments } from './requests/documents';
 import Typography from '@material-ui/core/Typography';
 
 const styles = theme => ({
@@ -29,23 +28,6 @@ class DocumentList extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {
-            documents: [],
-            selected: null
-        }
-
-        this.loadDocuments()
-    }
-
-    updateSelected(doc) {
-        this.setState({selected: doc._id});
-        this.props.onSelectionChange(doc)
-    }
-
-    loadDocuments() {
-        getDocuments().then(jsonR => {
-            this.setState({documents: jsonR.data})
-        })
     }
 
     formatDate(iso){
@@ -86,13 +68,12 @@ class DocumentList extends React.Component {
     }
 
     documents() {
-        const {selected} = this.state;
-        return this.state.documents.map((document, index) => {
+        const {selected} = this.props;
+        return this.props.documents.map((document, index) => {
             return <ListItem button
                 key={document._id}
-                onClick={() => this.updateSelected(document)}
-                selected={selected === document._id}
-                document={document}>
+                onClick={()=>this.props.onSelectionChange(document)}
+                selected={selected === document._id}>
                 <ListItemIcon>
                     <DescriptionIcon/>
                 </ListItemIcon>

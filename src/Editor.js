@@ -4,12 +4,16 @@ import DocumentList from './DocumentList';
 import DocumentEditor from './DocumentEditor';
 import DocumentResult from './DocumentResult';
 import ConfirmDialog from './ConfirmDialog';
+import NameDialog from './NameDialog';
+
+import { createDocument, getDocuments, updateDocument,deleteDocument } from './requests/documents';
 
 
-import { updateDocument,deleteDocument } from './requests/documents';
+const titleConfirmDelete = "Confirmacion";
+const messageConfirmDelete = "Esta seguro que desea eliminar este elemento?";
+const contentNameDocumentDialog = "Elija un nombre para este documento";
+const titleNewDocumentDialog = "Nuevo documento"
 
-const titleConfirmDelete = "Confirmacion"
-const messageConfirmDelete = "Esta seguro que desea eliminar este elemento?"
 const styles = {
     List: {
 
@@ -34,13 +38,15 @@ export default class Editor extends React.Component {
     constructor(props){
         super(props);
         this.state = {
-            isDocumentSelected : false,
-
+            documents: [],
             documentSelected : {
+                _id: 0,
                 name: '',
                 markdown_text: ''
             },
-            openConfirmDialog:false
+            isDocumentSelected : false,
+            openConfirmDialog:false,
+            openNameDialog:false
         }
 
         this.onSelectionChange = this.onSelectionChange.bind(this);
@@ -50,9 +56,20 @@ export default class Editor extends React.Component {
         this.onCancelConfirm = this.onCancelConfirm.bind(this);
         this.onAcceptConfirm = this.onAcceptConfirm.bind(this);
 
+        this.onCancelName = this.onCancelName.bind(this);
+        this.onAcceptName = this.onAcceptName.bind(this);
+
+        getDocuments().then(jsonR => {
+            this.setState({documents: jsonR.data})
+        });
     }
+
     onSelectionChange(doc) {
-        this.setState({documentSelected: doc,isDocumentSelected: true})
+        if(this.state.documentSelected._id === doc._id){
+            this.setState({documentSelected: {_id:0,name:'',markdown_text:''}, isDocumentSelected: false})
+        }else{
+            this.setState({documentSelected: doc, isDocumentSelected: true})
+        }
     }
 
     onChangeEditorValue(value) {
@@ -74,9 +91,15 @@ export default class Editor extends React.Component {
             let doc = this.state.documentSelected;
             updateDocument(doc._id, doc).then(jsonR => {
                 console.log(jsonR);
+                this.setState({
+                    documents: this.state.documents.map(item => item._id === doc._id ?
+                    { ...item, name: doc.name, markdown_text: doc.markdown_text } : 
+                    item
+                )})
+                
             })
         }else{
-
+            this.setState({openNameDialog:true})
         }
     }
 
@@ -88,8 +111,32 @@ export default class Editor extends React.Component {
         let doc = this.state.documentSelected;
             deleteDocument(doc._id).then(jsonR => {
                 console.log(jsonR);
-                 this.setState({openConfirmDialog:false})
+                 this.setState({
+                     documents:this.state.documents.filter(item => item._id !== doc._id),
+                     documentSelected:Object.assign({}, {name:'',markdown_text:'',id:0}),
+                     openConfirmDialog:false,
+                     isDocumentSelected:false})
             })
+    }
+
+    onCancelName(){
+        this.setState({openNameDialog:false})
+    }
+
+    onAcceptName(value){
+        if(value === "") return;
+
+        let {markdown_text} = this.state.documentSelected;
+        createDocument({name:value,markdown_text}).then(jsonR => {
+            this.setState(prevState => {
+                return {  
+                    documents: [jsonR.data, ...prevState.documents ],
+                    documentSelected: Object.assign({}, jsonR.data),
+                    isDocumentSelected:true,
+                    openNameDialog: false,
+                    selected: jsonR.data._id };                                 
+            })
+        })
     }
 
     render() {
@@ -101,6 +148,8 @@ export default class Editor extends React.Component {
                 <DocumentList 
                     styles={styles}
                     title="Markdowneditor"
+                    documents= {this.state.documents}
+                    selected = {this.state.documentSelected._id}
                     onSelectionChange={this.onSelectionChange} />
             </Grid>
             <Grid item sm={5}>
@@ -123,6 +172,14 @@ export default class Editor extends React.Component {
                 title={titleConfirmDelete}
                 message={messageConfirmDelete}
             />
-        </Grid>)
+            <NameDialog 
+                open={this.state.openNameDialog}
+                handleCancel = {this.onCancelName}
+                handleAccept = {this.onAcceptName}
+                title={titleNewDocumentDialog}
+                content={contentNameDocumentDialog}
+            />
+             </Grid>
+            )
     }
 }

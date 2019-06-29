@@ -18,7 +18,7 @@ export default class ConfirmDialog extends React.Component {
         return (
             <Dialog
                 open={this.props.open}
-                onClose={this.props.handleCancelConfirm}
+                onClose={this.props.handleCancel}
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description" >
                 <DialogTitle id="alert-dialog-title">{this.props.title}</DialogTitle>
